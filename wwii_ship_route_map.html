@@ -31,10 +31,10 @@
   <script>
     const map = L.map('map').setView([20, 140], 3);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  maxZoom: 19
-}).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
 
     const shipRoute = [
       { location: "Kearney, New Jersey, USA", date: "Before May 17, 1944", lat: 40.7684, lng: -74.1226 },
@@ -88,6 +88,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     const dateLabel = document.getElementById("currentDate");
     slider.max = shipRoute.length - 1;
 
+    function wrapLng(lng) {
+      return ((lng + 540) % 360) - 180;
+    }
+
     function updateMap(index) {
       markers.forEach(marker => map.removeLayer(marker));
       if (line) map.removeLayer(line);
@@ -98,7 +102,13 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         marker.bindPopup(`<strong>${point.location}</strong><br>${point.date}`);
         return marker;
       });
-      const latlngs = pointsToShow.map(p => [p.lat, p.lng]);
+
+      const latlngs = [];
+      for (let i = 0; i < pointsToShow.length; i++) {
+        let lng = wrapLng(pointsToShow[i].lng);
+        latlngs.push([pointsToShow[i].lat, lng]);
+      }
+
       line = L.polyline(latlngs, { color: 'blue' }).addTo(map);
 
       if (pointsToShow.length > 0) {
