@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WWII Ship Route Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 90vh;
+    }
+    #sliderContainer {
+      height: 10vh;
+      padding: 10px;
+      background: #f4f4f4;
+      text-align: center;
+    }
+    #dateSlider {
+      width: 80%;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="sliderContainer">
+    <input type="range" id="dateSlider" min="0" max="0" value="0">
+    <div id="currentDate"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([20, 140], 3);
+
+    L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png', {
+      attribution: 'Map tiles © <a href="http://stamen.com">Stamen Design</a>, © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+      maxZoom: 18
+    }).addTo(map);
+
+    const shipRoute = [
+      { location: "Kearney, New Jersey, USA", date: "Before May 17, 1944", lat: 40.7684, lng: -74.1226 },
+      { location: "Brooklyn Navy Yard, New York, USA", date: "May 17, 1944", lat: 40.7003, lng: -73.9721 },
+      { location: "Hamilton Bay, Bermuda", date: "June 7, 1944", lat: 32.2949, lng: -64.7820 },
+      { location: "Brooklyn, New York, USA", date: "July 12, 1944", lat: 40.6782, lng: -73.9442 },
+      { location: "Hampton Roads, Norfolk, Virginia, USA", date: "August 19, 1944", lat: 36.9441, lng: -76.3303 },
+      { location: "Panama City, Panama", date: "October 2-3, 1944", lat: 8.9833, lng: -79.5167 },
+      { location: "San Pedro Bay, California, USA", date: "October 12-13, 1944", lat: 33.7324, lng: -118.2760 },
+      { location: "Pearl Harbor, Oahu, Hawaii, USA", date: "October 21 - December 16, 1944", lat: 21.3450, lng: -157.9750 },
+      { location: "Eniwetok Atoll, Marshall Islands", date: "December 23, 1944", lat: 11.3400, lng: 162.3400 },
+      { location: "Caroline Islands", date: "December 25, 1944", lat: 7.0000, lng: 146.0000 },
+      { location: "Guam", date: "December 27, 1944", lat: 13.4443, lng: 144.7937 },
+      { location: "Ulithi Atoll, Caroline Islands", date: "December 28, 1944", lat: 10.0167, lng: 139.7500 },
+      { location: "Formosa (Taiwan) Area", date: "January 3-4, 1945", lat: 23.6978, lng: 120.9605 },
+      { location: "Luzon, Philippines", date: "January 6, 1945", lat: 16.5662, lng: 121.2620 },
+      { location: "Bashi Channel, Luzon-Formosa", date: "January 9, 1945", lat: 20.6167, lng: 121.8833 },
+      { location: "South China Sea", date: "January 11-20, 1945", lat: 15.0000, lng: 115.0000 },
+      { location: "Hong Kong, Hainan, Canton, Swatow area", date: "January 15-16, 1945", lat: 22.3193, lng: 114.1694 },
+      { location: "Balintang Channel", date: "January 20, 1945", lat: 19.9000, lng: 121.7000 },
+      { location: "Okinawa, Ryukyu Islands", date: "January 22, 1945", lat: 26.3344, lng: 127.8056 },
+      { location: "Ulithi Atoll, Caroline Islands", date: "January 26 - February 10, 1945", lat: 10.0167, lng: 139.7500 },
+      { location: "Tokyo, Japan (offshore)", date: "February 16-17, 1945", lat: 35.6762, lng: 139.6503 },
+      { location: "Iwo Jima, Japan", date: "February 19, 1945", lat: 24.7519, lng: 141.2900 },
+      { location: "Okinawa, Ryukyu Islands", date: "March 1, 1945", lat: 26.3344, lng: 127.8056 },
+      { location: "Minami Daito Shima, Japan", date: "March 28-29, 1945", lat: 25.8333, lng: 131.2333 },
+      { location: "Okinawa, Ryukyu Islands (invasion)", date: "April 1, 1945", lat: 26.3344, lng: 127.8056 },
+      { location: "Kerama Retto, Ryukyu Islands", date: "April 4-5, 1945", lat: 26.1694, lng: 127.2361 },
+      { location: "Kyushu, Japan", date: "April 7, 1945", lat: 32.7500, lng: 129.8667 },
+      { location: "Okinawa, Ryukyu Islands", date: "April 11-19, 1945", lat: 26.3344, lng: 127.8056 },
+      { location: "Minami Daito Shima, Japan", date: "May 10, 1945", lat: 25.8333, lng: 131.2333 },
+      { location: "Tokyo Bay, Japan", date: "July 10 - August 15, 1945", lat: 35.4533, lng: 139.6380 },
+      { location: "Sagami Wan, Japan", date: "August 26, 1945", lat: 35.1700, lng: 139.6100 },
+      { location: "Iwo Jima, Japan", date: "August 28, 1945", lat: 24.7519, lng: 141.2900 },
+      { location: "Tokyo Bay, Japan", date: "August 31 - September 1, 1945", lat: 35.4533, lng: 139.6380 },
+      { location: "Tokyo Bay, Japan (Surrender Ceremony)", date: "September 2, 1945", lat: 35.4533, lng: 139.6380 },
+      { location: "Eniwetok Atoll, Marshall Islands", date: "September 26, 1945", lat: 11.3400, lng: 162.3400 },
+      { location: "Nagoya, Japan", date: "October 31, 1945", lat: 35.1815, lng: 136.9066 },
+      { location: "Wakayama, Japan", date: "Post-October 31, 1945", lat: 34.2261, lng: 135.1675 },
+      { location: "Hiroshima, Japan", date: "Post-October 31, 1945", lat: 34.3853, lng: 132.4553 },
+      { location: "Kure, Japan", date: "Post-October 31, 1945", lat: 34.2492, lng: 132.5664 },
+      { location: "Kagoshima, Japan", date: "Post-October 31, 1945", lat: 31.5966, lng: 130.5571 },
+      { location: "Nagasaki, Japan", date: "Post-October 31, 1945", lat: 32.7503, lng: 129.8777 },
+      { location: "Sasebo, Japan", date: "Post-October 31, 1945", lat: 33.1591, lng: 129.7220 }
+    ];
+
+    let markers = [];
+    let line;
+
+    const slider = document.getElementById("dateSlider");
+    const dateLabel = document.getElementById("currentDate");
+    slider.max = shipRoute.length - 1;
+
+    function updateMap(index) {
+      markers.forEach(marker => map.removeLayer(marker));
+      if (line) map.removeLayer(line);
+
+      const pointsToShow = shipRoute.slice(0, index + 1);
+      markers = pointsToShow.map(point => {
+        const marker = L.marker([point.lat, point.lng]).addTo(map);
+        marker.bindPopup(`<strong>${point.location}</strong><br>${point.date}`);
+        return marker;
+      });
+      const latlngs = pointsToShow.map(p => [p.lat, p.lng]);
+      line = L.polyline(latlngs, { color: 'blue' }).addTo(map);
+
+      if (pointsToShow.length > 0) {
+        const last = pointsToShow[pointsToShow.length - 1];
+        dateLabel.innerText = `${last.date} — ${last.location}`;
+      }
+    }
+
+    slider.addEventListener('input', () => {
+      updateMap(parseInt(slider.value));
+    });
+
+    updateMap(0);
+  </script>
+</body>
+</html>
