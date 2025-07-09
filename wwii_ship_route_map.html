@@ -31,7 +31,7 @@
   <script>
     const map = L.map('map', {
       center: [20, 140],
-      zoom: 5,
+      zoom: 2,
       worldCopyJump: true
     });
 
@@ -41,7 +41,7 @@
     }).addTo(map);
 
     const shipRoute = [
-      { location: "Kearney, New Jersey, USA", date: "Before May 17, 1944", lat: 40.7684, lng: -74.1226 },
+            { location: "Kearney, New Jersey, USA", date: "Before May 17, 1944", lat: 40.7684, lng: -74.1226 },
       { location: "Brooklyn Navy Yard, New York, USA", date: "May 17, 1944", lat: 40.7003, lng: -73.9721 },
       { location: "Hamilton Bay, Bermuda", date: "June 7, 1944", lat: 32.2949, lng: -64.7820 },
       { location: "Brooklyn, New York, USA", date: "July 12, 1944", lat: 40.6782, lng: -73.9442 },
@@ -86,37 +86,45 @@
     ];
 
     let markers = [];
-    let lines = [];
+    let line;
 
     const slider = document.getElementById("dateSlider");
     const dateLabel = document.getElementById("currentDate");
     slider.max = shipRoute.length - 1;
 
+    function interpolateDateline(lat1, lng1, lat2, lng2) {
+      // Inserts an intermediate point at the dateline to allow the line to wrap naturally
+      if (lng1 > 0 && lng2 < 0 && Math.abs(lng1 - lng2) > 180) {
+        return [[lat1, lng1], [lat1, 180], [lat2, -180], [lat2, lng2]];
+      } else if (lng1 < 0 && lng2 > 0 && Math.abs(lng1 - lng2) > 180) {
+        return [[lat1, lng1], [lat1, -180], [lat2, 180], [lat2, lng2]];
+      } else {
+        return [[lat1, lng1], [lat2, lng2]];
+      }
+    }
+
     function updateMap(index) {
       markers.forEach(marker => map.removeLayer(marker));
-      lines.forEach(line => map.removeLayer(line));
+      if (line) map.removeLayer(line);
       markers = [];
-      lines = [];
 
       const pointsToShow = shipRoute.slice(0, index + 1);
-      for (let i = 0; i < pointsToShow.length; i++) {
-        const point = pointsToShow[i];
+      markers = pointsToShow.map(point => {
         const marker = L.marker([point.lat, point.lng]).addTo(map);
         marker.bindPopup(`<strong>${point.location}</strong><br>${point.date}`);
-        markers.push(marker);
+        return marker;
+      });
 
-        if (i > 0) {
-          const prev = pointsToShow[i - 1];
-          const diff = Math.abs(point.lng - prev.lng);
-          // Detect dateline crossing
-          if (diff > 180) {
-            const midLng = (point.lng > prev.lng) ? point.lng - 360 : point.lng + 360;
-            lines.push(L.polyline([[prev.lat, prev.lng], [point.lat, midLng]], { color: 'blue' }).addTo(map));
-          } else {
-            lines.push(L.polyline([[prev.lat, prev.lng], [point.lat, point.lng]], { color: 'blue' }).addTo(map));
-          }
-        }
+      const latlngs = [];
+      for (let i = 0; i < pointsToShow.length - 1; i++) {
+        const p1 = pointsToShow[i];
+        const p2 = pointsToShow[i + 1];
+        latlngs.push(...interpolateDateline(p1.lat, p1.lng, p2.lat, p2.lng));
       }
+
+      line = L.polyline(latlngs, {
+        color: 'blue'
+      }).addTo(map);
 
       if (pointsToShow.length > 0) {
         const last = pointsToShow[pointsToShow.length - 1];
