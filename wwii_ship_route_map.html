@@ -29,7 +29,11 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([20, 140], 3);
+    const map = L.map('map', {
+      center: [20, 140],
+      zoom: 3,
+      worldCopyJump: true
+    });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -82,34 +86,37 @@
     ];
 
     let markers = [];
-    let line;
+    let lines = [];
 
     const slider = document.getElementById("dateSlider");
     const dateLabel = document.getElementById("currentDate");
     slider.max = shipRoute.length - 1;
 
-    function wrapLng(lng) {
-      return ((lng + 540) % 360) - 180;
-    }
-
     function updateMap(index) {
       markers.forEach(marker => map.removeLayer(marker));
-      if (line) map.removeLayer(line);
+      lines.forEach(line => map.removeLayer(line));
+      markers = [];
+      lines = [];
 
       const pointsToShow = shipRoute.slice(0, index + 1);
-      markers = pointsToShow.map(point => {
+      for (let i = 0; i < pointsToShow.length; i++) {
+        const point = pointsToShow[i];
         const marker = L.marker([point.lat, point.lng]).addTo(map);
         marker.bindPopup(`<strong>${point.location}</strong><br>${point.date}`);
-        return marker;
-      });
+        markers.push(marker);
 
-      const latlngs = [];
-      for (let i = 0; i < pointsToShow.length; i++) {
-        let lng = wrapLng(pointsToShow[i].lng);
-        latlngs.push([pointsToShow[i].lat, lng]);
+        if (i > 0) {
+          const prev = pointsToShow[i - 1];
+          const diff = Math.abs(point.lng - prev.lng);
+          // Detect dateline crossing
+          if (diff > 180) {
+            const midLng = (point.lng > prev.lng) ? point.lng - 360 : point.lng + 360;
+            lines.push(L.polyline([[prev.lat, prev.lng], [point.lat, midLng]], { color: 'blue' }).addTo(map));
+          } else {
+            lines.push(L.polyline([[prev.lat, prev.lng], [point.lat, point.lng]], { color: 'blue' }).addTo(map));
+          }
+        }
       }
-
-      line = L.polyline(latlngs, { color: 'blue' }).addTo(map);
 
       if (pointsToShow.length > 0) {
         const last = pointsToShow[pointsToShow.length - 1];
